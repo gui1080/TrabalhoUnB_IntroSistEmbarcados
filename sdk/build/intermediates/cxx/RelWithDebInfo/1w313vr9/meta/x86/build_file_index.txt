@@ -1,0 +1,1 @@
+C:\Users\Guilherme Braga\AndroidStudioProjects\SistemasEmbarcados\sdk\libcxx_helper\CMakeLists.txt

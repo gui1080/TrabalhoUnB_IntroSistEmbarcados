@@ -1,0 +1,1 @@
+C:\Users\Guilherme Braga\AndroidStudioProjects\SistemasEmbarcados\sdk\build\intermediates\cxx\RelWithDebInfo\1w313vr9\obj\arm64-v8a
