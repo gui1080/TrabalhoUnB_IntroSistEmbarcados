@@ -150,7 +150,10 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
             int rows = mRGBA.rows();
             int cols = mRGBA.cols();
             // int ch = mRgba.channels();
-            double R=0,G=0,B=0;
+            //double R=0,G=0,B=0;
+
+            double[][] matriz_vermelho = new double[rows][cols];
+            double[][] matriz_azul = new double[rows][cols];
 
             for (int i=0; i<rows; i++)
             {
@@ -161,9 +164,19 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                     // acessando valor de red/green/blue frame a frame
                     // salvar em outra matriz
 
-                    R = data[0];
-                    G= data[1];
-                    B = data[2];
+                    //R = data[0];
+                    //G= data[1];
+                    //B = data[2];
+
+                    matriz_vermelho[i][j] = data[0];
+                    matriz_azul[i][j] = data[2];
+
+                    // frames estão sendo recebidos, mas esse print faz o programa travar MUITO!
+
+                    //Log.i(TAG, "onCameraFrame -> Matriz de Vermelho no Frame -> " + Double.toString(matriz_vermelho[i][j]));
+                    //Log.i(TAG, "onCameraFrame -> Matriz de Azul no Frame -> " + Double.toString(matriz_azul[i][j]));
+
+
                 }
             }
 
