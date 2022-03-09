@@ -11,10 +11,12 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -427,10 +429,27 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
         if (bmpValid && mCacheBitmap != null) {
             Canvas canvas = getHolder().lockCanvas();
             if (canvas != null) {
+
                 canvas.drawColor(0, android.graphics.PorterDuff.Mode.CLEAR);
+
                 if (BuildConfig.DEBUG)
                     Log.d(TAG, "mStretch value: " + mScale);
 
+                //canvas.drawColor(0, android.graphics.PorterDuff.Mode.CLEAR);
+
+                //canvas.drawBitmap(mCacheBitmap, (canvas.getWidth() - mCacheBitmap.getWidth()) / 2, (canvas.getHeight() - mCacheBitmap.getHeight()) / 2, null);
+
+                //Change to support portrait view
+                // https://doc.xuwenliang.com/docs/video_audio/3813
+
+                Matrix matrix = new Matrix();
+
+                matrix.preTranslate((canvas.getWidth() - mCacheBitmap.getWidth()) / 2,(canvas.getHeight() - mCacheBitmap.getHeight()) / 2);
+                if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
+                    matrix.postRotate(90f,(canvas.getWidth()) / 2,(canvas.getHeight()) / 2);
+                canvas.drawBitmap(mCacheBitmap, matrix, new Paint());
+
+                /*
                 if (mScale != 0) {
                     canvas.drawBitmap(mCacheBitmap, new Rect(0,0,mCacheBitmap.getWidth(), mCacheBitmap.getHeight()),
                             new Rect((int)((canvas.getWidth() - mScale*mCacheBitmap.getWidth()) / 2),
@@ -444,6 +463,7 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
                                     (canvas.getWidth() - mCacheBitmap.getWidth()) / 2 + mCacheBitmap.getWidth(),
                                     (canvas.getHeight() - mCacheBitmap.getHeight()) / 2 + mCacheBitmap.getHeight()), null);
                 }
+                */
 
                 if (mFpsMeter != null) {
                     mFpsMeter.measure();
