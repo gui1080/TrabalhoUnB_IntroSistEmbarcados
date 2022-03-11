@@ -30,7 +30,37 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
     Mat mRGBAT;
     CameraBridgeViewBase cameraBridgeViewBase;
 
+
+    int rows = 600;
+    int cols = 800;
+
+    // int ch = mRgba.channels();
+    //double R=0,G=0,B=0;
+
+    double[][] matriz_vermelho = new double[rows][cols];
+    double[][] matriz_azul = new double[rows][cols];
+
+    double[][] matriz_antiga_vermelho = new double[rows][cols];
+    double[][] matriz_antiga_azul = new double[rows][cols];
+
+    double[][] matriz_dif_vermelho = new double[rows][cols];
+    double[][] matriz_dif_azul = new double[rows][cols];
+
     int counter = 0;
+
+    /*for(int i=0; i<rows; i++)
+    {
+        for (int j=0; j<cols; j++)
+        {
+            matriz_vermelho[i][j] = 0;
+            matriz_azul[i][j] = 0;
+
+            matriz_antiga_vermelho[i][j] = 0;
+            matriz_antiga_azul[i][j] = 0;
+        }
+    }*/
+
+
 
     BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(this) {
 
@@ -145,17 +175,13 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         // pega o frame no frame 10, 20 e 30, a cada 10 frames!
         if( (counter % 48) == 0){
 
+
+            //cols = 800
+            //rows = 600
+
             //Core.flip(frame, frame, 90);
 
-            int rows = mRGBA.rows();
-            int cols = mRGBA.cols();
-            // int ch = mRgba.channels();
-            //double R=0,G=0,B=0;
-
-            double[][] matriz_vermelho = new double[rows][cols];
-            double[][] matriz_azul = new double[rows][cols];
-
-            for (int i=0; i<rows; i++)
+            for(int i=0; i<rows; i++)
             {
                 for (int j=0; j<cols; j++)
                 {
@@ -168,13 +194,16 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                     //G= data[1];
                     //B = data[2];
 
+                    matriz_antiga_vermelho[i][j] = matriz_vermelho[i][j];
+                    matriz_antiga_azul[i][j] = matriz_azul[i][j];
+
                     matriz_vermelho[i][j] = data[0];
                     matriz_azul[i][j] = data[2];
 
                     // frames estão sendo recebidos, mas esse print faz o programa travar MUITO!
 
-                    //Log.i(TAG, "onCameraFrame -> Matriz de Vermelho no Frame -> " + Double.toString(matriz_vermelho[i][j]));
-                    //Log.i(TAG, "onCameraFrame -> Matriz de Azul no Frame -> " + Double.toString(matriz_azul[i][j]));
+                    //Log.i(TAG, "onCameraFrame -> Matriz de Vermelho no Frame -> " + Int.toString(rows));
+                    //Log.i(TAG, "onCameraFrame -> Matriz de Azul no Frame -> " + Int.toString(cols));
 
 
                 }
@@ -183,9 +212,24 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 
         }
 
+        if((counter % 144) == 0){
+
+            for(int i=0; i<rows; i++)
+            {
+                for (int j=0; j<cols; j++)
+                {
+
+                    matriz_dif_vermelho[i][j] = matriz_vermelho[i][j] - matriz_antiga_vermelho[i][j];
+                    matriz_dif_azul[i][j] = matriz_azul[i][j] - matriz_antiga_azul[i][j];
+
+                }
+            }
+
+        }
+
         counter = counter + 1;
 
-        if(counter == 49){
+        if(counter == 145){
             counter = 0;
         }
 
