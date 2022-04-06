@@ -1,6 +1,7 @@
 package com.example.sistemasembarcados;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.SurfaceView;
@@ -17,10 +18,21 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfRect;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.objdetect.CascadeClassifier;
 
 import androidx.annotation.NonNull;
 import android.util.Log;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 
 public class CameraActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
@@ -30,6 +42,9 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
     Mat mRGBAT;
     CameraBridgeViewBase cameraBridgeViewBase;
 
+    File cascFile;
+
+    CascadeClassifier faceDetector;
 
     int rows = 600;
     int cols = 800;
@@ -61,7 +76,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
     }*/
 
 
-
+    /*
     BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(this) {
 
         @Override
@@ -83,6 +98,63 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
             super.onManagerConnected(status);
 
         }
+    }; */
+
+    private BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(this) {
+
+        @Override
+        public void onManagerConnected(int status) throws IOException {
+            switch(status){
+                case LoaderCallbackInterface.SUCCESS:
+                {
+
+                    Log.i(TAG, "onManagerConnect: OpenCV Loaded");
+                    //cameraBridgeViewBase.enableView();
+
+                    InputStream is = getResources().openRawResource(R.raw.haarcascade_frontalface_alt2);
+                    File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
+
+                    cascFile = new File(cascadeDir, "haarcascade_frontalface_alt2.xml");
+
+
+                    FileOutputStream fos = new FileOutputStream(cascFile);
+
+
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+
+                    while((bytesRead = is.read(buffer)) != -1){
+                        fos.write(buffer, 0, bytesRead);
+                    }
+
+                    is.close();
+                    fos.close();
+
+                    faceDetector = new CascadeClassifier(cascFile.getAbsolutePath());
+
+                    if(faceDetector.empty()){
+                        faceDetector = null;
+                    }
+                    else{
+                        cascadeDir.delete();
+                    }
+
+                    cameraBridgeViewBase.enableView();
+
+                }
+                break;
+
+                default:
+                {
+                    super.onManagerConnected(status);
+                }
+                break;
+            }
+
+            //super.onManagerConnected(status);
+
+        }
+
     };
 
     @Override
@@ -95,19 +167,35 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 
         cameraBridgeViewBase = (CameraBridgeViewBase) findViewById(R.id.CameraView);
         cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
-        cameraBridgeViewBase.setCvCameraViewListener(this);
+        //cameraBridgeViewBase.setCvCameraViewListener(this);
 
+        if(!OpenCVLoader.initDebug()){
+
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, baseLoaderCallback);
+
+        } else{
+
+            try {
+                baseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        cameraBridgeViewBase.setCvCameraViewListener(this);
 
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         // permissão camera
-        switch(requestCode){
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
 
-            case 1:{
+            case 1: {
 
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
                     cameraBridgeViewBase.setCameraPermissionGranted();
 
@@ -126,11 +214,17 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         if(OpenCVLoader.initDebug()){
 
             Log.d(TAG, "onResume: OpenCV iniciado (onResume)");
-            baseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+
+            try {
+                baseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
         } else{
 
             Log.d(TAG, "onResume: OpenCV não iniciou (onResume)");
+
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, baseLoaderCallback);
 
         }
@@ -160,7 +254,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
     @Override
     public void onCameraViewStarted(int width, int height) {
         mRGBA = new Mat(height, width, CvType.CV_8UC4);
-        mRGBAT = new Mat(height, width, CvType.CV_8UC4);
+        //mRGBAT = new Mat(height, width, CvType.CV_8UC4);
     }
 
 
@@ -171,6 +265,17 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         // frame colorido!
         mRGBA = inputFrame.rgba();
         //mRGBAT = inputFrame.gray();
+
+        MatOfRect faceDetections = new MatOfRect();
+        faceDetector.detectMultiScale(mRGBA, faceDetections);
+
+        for(Rect rect: faceDetections.toArray()){
+
+            Imgproc.rectangle(mRGBA, new Point(rect.x, rect.y),
+                    new Point(rect.x + rect.width, rect.y+rect.height),
+                    new Scalar(255, 0, 0));
+
+        }
 
         // pega o frame no frame 10, 20 e 30, a cada 10 frames!
         if( (counter % 48) == 0){
@@ -235,6 +340,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 
         return mRGBA;
     }
+
 
 
 }
