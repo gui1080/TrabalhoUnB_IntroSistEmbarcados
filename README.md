@@ -10,3 +10,4 @@ Aluno: Guilherme Braga 17/0162290
 
 Demonstração: https://youtu.be/fqHi2pzu6vc
 
+Download do APK para Android: https://drive.google.com/drive/folders/1ZZxKSh6pNzPpcFZyC2Pi2d9o_EBGBZjv?usp=sharing
