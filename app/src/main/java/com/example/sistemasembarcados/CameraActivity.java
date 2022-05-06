@@ -4,6 +4,8 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.SurfaceView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -58,7 +60,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
     // int ch = mRgba.channels();
     //double R=0,G=0,B=0;
 
-    //TextView ver_sat = (TextView) findViewById(R.id.SATURACAO);
+    //ver_sat.setText("saturação");
 
     // 360 -> 555-195
     // 367 -> 433-66
@@ -82,6 +84,19 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
     double[][] matriz_dif_vermelho = new double[rows_aux][cols_aux];
     double[][] matriz_dif_azul = new double[rows_aux][cols_aux];
 
+    double alfa = 0.015;
+
+    double media_picos_azul = 0;
+    double media_picos_vermelho = 0;
+
+    double total_azul = 0;
+    double total_vermelho = 0;
+
+    double[] picos_azul = new double[5];
+    double[] picos_vermelho = new double[5];
+
+    int[] posicoes_azul = new int[5];
+    int[] posicoes_vermelho = new int[5];
     int counter = 0;
     int i=0;
     int j=0;
@@ -180,6 +195,17 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 
     };
 
+    private void setText(final TextView text, final String value){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                text.setText(value);
+            }
+        });
+    }
+
+    TextView ver_sat;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -192,8 +218,8 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
         //cameraBridgeViewBase.setCvCameraViewListener(this);
 
-        TextView ver_sat = (TextView) findViewById(R.id.SATURACAO);
-        ver_sat.setText("Saturação: " + Sat);
+        ver_sat = (TextView) findViewById(R.id.SATURACAO);
+        //ver_sat.setText("Saturação: " + Sat);
 
         if(!OpenCVLoader.initDebug()){
 
@@ -212,6 +238,8 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         cameraBridgeViewBase.setCvCameraViewListener(this);
 
     }
+
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -409,9 +437,9 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
             zigzag_azul     = zigZagMatrix(matriz_dif_azul,      rows_aux, cols_aux);
 
             // zera mais ou menos 20% da ponta
-            /*double tirar_final = img_zigzag - (img_zigzag * 0.2);
+            double tirar_final = img_zigzag - (img_zigzag * 0.2);
 
-            for(int i = (int) tirar_final ; i<img_zigzag; i++){
+            /*for(int i = (int) tirar_final ; i<img_zigzag; i++){
 
                 zigzag_vermelho[i] = 0;
                 zigzag_azul[i] = 0;
@@ -422,12 +450,6 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 
             // vou pegar os 10 maiores valores do array
             // DC vai ser o primeiro maior
-
-            double[] picos_azul = new double[5];
-            double[] picos_vermelho = new double[5];
-
-            int[] posicoes_azul = new int[5];
-            int[] posicoes_vermelho = new int[5];
 
             zigzag_vermelho_sorted = zigzag_vermelho;
             zigzag_azul_sorted = zigzag_azul;
@@ -487,11 +509,6 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 
             }
 
-            double media_picos_azul = 0;
-            double media_picos_vermelho = 0;
-
-            double total_azul = 0;
-            double total_vermelho = 0;
 
             for(int i = 0 ; i<5; i++){
                 total_azul = total_azul + picos_azul[i];
@@ -501,14 +518,13 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
             media_picos_azul = total_azul/5;
             media_picos_vermelho = total_vermelho/5;
 
-            // SatO2 = 100 - R * alfa
-            // alfa = 0.015
+            // fa
+            // alfa = 0.01SatO2 = 100 - R * al5
 
             double R = 0;
 
             R = ((zigzag_vermelho[DC_vermelho]/media_picos_vermelho) / (zigzag_azul[DC_azul]/media_picos_azul));
 
-            double alfa = 0.015;
 
             Sat = 100 - (R * alfa);
 
@@ -522,6 +538,9 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
             Log.d(TAG, "SatO2 -> " + Sat);
 
             //ver_sat.setText("Saturação: " + Sat);
+            setText( ver_sat, Double.toString(Sat) );
+
+            //setText(ver_sat, Double.toString(Sat));
 
         }
 
@@ -545,9 +564,6 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 
         double result[] = new double[size];
 
-        // Boolean variable that will true if we
-        // need to increment 'row' value otherwise
-        // false- if increment 'col' value
         boolean row_inc = false;
 
         int count = 0;
@@ -562,10 +578,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
 
                 if (i + 1 == len)
                     break;
-                // If row_increment value is true
-                // increment row and decrement col
-                // else decrement row and increment
-                // col
+
                 if (row_inc) {
                     ++row;
                     --col;
@@ -578,8 +591,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
             if (len == mn)
                 break;
 
-            // Update row or col value according
-            // to the last increment
+
             if (row_inc) {
                 ++row;
                 row_inc = false;
@@ -589,7 +601,6 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
             }
         }
 
-        // Update the indexes of row and col variable
         if (row == 0) {
             if (col == m - 1)
                 ++row;
@@ -604,7 +615,6 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
             row_inc = false;
         }
 
-        // Print the next half zig-zag pattern
         int MAX = Math.max(m, n) - 1;
         for (int len, diag = MAX; diag > 0; --diag) {
 
@@ -614,15 +624,13 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                 len = diag;
 
             for (int i = 0; i < len; ++i) {
-                //System.out.print(arr[row][col] + " ");
+
                 result[count] = arr[row][col];
                 count = count + 1;
 
                 if (i + 1 == len)
                     break;
 
-                // Update row or col value according
-                // to the last increment
                 if (row_inc) {
                     ++row;
                     --col;
@@ -632,7 +640,6 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
                 }
             }
 
-            // Update the indexes of row and col variable
             if (row == 0 || col == m - 1) {
                 if (col == m - 1)
                     ++row;
@@ -706,14 +713,7 @@ public class CameraActivity extends AppCompatActivity implements CameraBridgeVie
         }
 
         return dct;
-        /*
-        for (i = 0; i < m; i++)
-        {
-            for (j = 0; j < n; j++)
-                System.out.printf("%f\t", dct[i][j]);
-            System.out.println();
-        }
-        */
+
     }
 
 
